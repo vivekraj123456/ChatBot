@@ -61,32 +61,37 @@ export interface FAQ {
 // Database operations
 export const conversationService = {
   create: (): Conversation => {
+    const database = getDatabase()
     const id = uuidv4()
-    const stmt = db.prepare("INSERT INTO conversations (id) VALUES (?)")
+    const stmt = database.prepare("INSERT INTO conversations (id) VALUES (?)")
     stmt.run(id)
-    return db.prepare("SELECT * FROM conversations WHERE id = ?").get(id) as Conversation
+    return database.prepare("SELECT * FROM conversations WHERE id = ?").get(id) as Conversation
   },
 
   findById: (id: string): Conversation | undefined => {
-    return db.prepare("SELECT * FROM conversations WHERE id = ?").get(id) as Conversation | undefined
+    const database = getDatabase()
+    return database.prepare("SELECT * FROM conversations WHERE id = ?").get(id) as Conversation | undefined
   },
 
   updateTimestamp: (id: string): void => {
-    db.prepare("UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(id)
+    const database = getDatabase()
+    database.prepare("UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(id)
   },
 }
 
 export const messageService = {
   create: (conversationId: string, sender: "user" | "ai", text: string): Message => {
+    const database = getDatabase()
     const id = uuidv4()
-    const stmt = db.prepare("INSERT INTO messages (id, conversation_id, sender, text) VALUES (?, ?, ?, ?)")
+    const stmt = database.prepare("INSERT INTO messages (id, conversation_id, sender, text) VALUES (?, ?, ?, ?)")
     stmt.run(id, conversationId, sender, text)
     conversationService.updateTimestamp(conversationId)
-    return db.prepare("SELECT * FROM messages WHERE id = ?").get(id) as Message
+    return database.prepare("SELECT * FROM messages WHERE id = ?").get(id) as Message
   },
 
   findByConversationId: (conversationId: string): Message[] => {
-    return db
+    const database = getDatabase()
+    return database
       .prepare("SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC")
       .all(conversationId) as Message[]
   },
@@ -94,7 +99,8 @@ export const messageService = {
 
 export const faqService = {
   getAll: (): FAQ[] => {
-    return db.prepare("SELECT * FROM faq_knowledge").all() as FAQ[]
+    const database = getDatabase()
+    return database.prepare("SELECT * FROM faq_knowledge").all() as FAQ[]
   },
 
   getKnowledgeContext: (): string => {
@@ -102,6 +108,3 @@ export const faqService = {
     return faqs.map((faq) => `Q: ${faq.question}\nA: ${faq.answer}`).join("\n\n")
   },
 }
-
-// Initialize database on import
-getDatabase()
