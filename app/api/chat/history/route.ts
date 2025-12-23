@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { type NextRequest, NextResponse } from "next/server"
 import { messageService, conversationService } from "@/lib/db"
 
